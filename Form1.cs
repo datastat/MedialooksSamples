@@ -1,5 +1,6 @@
 using MFORMATSLib;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -22,6 +23,8 @@ namespace MedialooksMoveByTimecode
 
         public Form1()
         {
+
+
             InitializeComponent();
 
             //string strCmdText;
@@ -93,6 +96,13 @@ namespace MedialooksMoveByTimecode
                 //    await Task.Delay(500);
                 //}
             });
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            cancelSource.Cancel();
+
+            base.OnClosing(e);
         }
 
         private void ATimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -227,6 +237,19 @@ namespace MedialooksMoveByTimecode
                 }
 
             }
+
+            if (MFPreviews[mfnum] != null)
+            {
+                MFPreviews[mfnum].MFClose();
+                Marshal.FinalReleaseComObject(MFPreviews[mfnum]);
+            }
+
+            if (MFReaders[mfnum] != null)
+            {
+                MFReaders[mfnum].ReaderClose();
+                Marshal.FinalReleaseComObject(MFReaders[mfnum]);
+            }
+
         }
 
         private void UpdateSlider(M_TIMECODE frameTimeTcFrame, int frameNum)
