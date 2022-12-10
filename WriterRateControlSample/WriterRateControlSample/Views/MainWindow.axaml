@@ -12,6 +12,25 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <StackPanel>
+        <Button Content="Start" Command="{Binding StartRecordingCommand}" />
+        <Button Content="Stop" Command="{Binding StopRecordingCommand}" />
+        <Button Content="OpenFolder" Command="{Binding OpenFolderCommand}" />
+        <TextBox Text="{Binding FolderName}" />
+        
+        <ListBox Items="{Binding WriterReaderList}">
+            
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Id}" />
+                        <TextBlock Text="{Binding OutputString}" />
+                        
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        
+    </StackPanel>
 
 </Window>
