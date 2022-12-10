@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AvaloniaDataGridTest.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="AvaloniaDataGridTest.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="AvaloniaDataGridTest">
+
+    <Design.DataContext>
+        <vm:TestListViewModel/>
+    </Design.DataContext>
+    
+    <Grid RowDefinitions="300, *">
+        <DataGrid Name="MainDataGrid" AutoGenerateColumns="True" Items="{Binding TestList}" />
+        
+        <StackPanel Grid.Row="1">
+            
+            <Button Command="{Binding MyCommand}" Content="Click" />
+            
+            <TextBox Text="{Binding TextTest}"></TextBox>
+            
+        </StackPanel>
+    </Grid>
+</Window>
