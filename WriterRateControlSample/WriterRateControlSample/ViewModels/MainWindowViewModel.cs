@@ -18,7 +18,7 @@ namespace WriterRateControlSample.ViewModels
         public ReactiveCommand<Unit, Unit> StopRecordingCommand { get; }
         public ReactiveCommand<Unit, Unit> OpenFolderCommand { get; }
 
-        public AvaloniaList<WriterReaderClass> WriterReaderList { get; set; } = new AvaloniaList<WriterReaderClass>();
+        [Reactive] public AvaloniaList<WriterReaderClass> WriterReaderList { get; set; } = new AvaloniaList<WriterReaderClass>();
 
 
         [Reactive] public string FolderName { get; set; }
@@ -36,11 +36,14 @@ namespace WriterRateControlSample.ViewModels
             FolderName =  @$"c:\fr-rec1\{Guid.NewGuid().ToString()}";
             
             System.IO.Directory.CreateDirectory(FolderName);
-            
-            for (int i = 0; i < 7; i++)
+
+            Observable.Start(() =>
             {
-                WriterReaderList.Add(new WriterReaderClass(i + 1, FolderName));
-            }
+                for (int i = 0; i < 4; i++)
+                {
+                    WriterReaderList.Add(new WriterReaderClass(i + 1, FolderName));
+                }
+            });
         }
 
         private void StartRecAll()

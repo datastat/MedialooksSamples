@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http.Headers;
 using System.Reactive.Linq;
 using System.Threading;
@@ -8,6 +9,7 @@ using MFORMATSLib;
 using Microsoft.CodeAnalysis.Operations;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using WriterRateControlSample.Views;
 
 namespace WriterRateControlSample.ViewModels;
 
@@ -24,12 +26,15 @@ public class WriterReaderClass : ReactiveObject
     
     [Reactive] public string OutputString { get; set; }
     [Reactive] public string ID { get; set; }
+    public MfMediaPlayer MfMediaPlayerInst { get; }
 
     private string folderName;
     public WriterReaderClass(int id, string folderName1)
     {
         ID = id.ToString();
         folderName = folderName1;
+
+        MfMediaPlayerInst = new MfMediaPlayer();
     }
     
     private void RecordingThread()
@@ -45,9 +50,12 @@ public class WriterReaderClass : ReactiveObject
             myReader.ReaderOpen("rtsp://localhost/live",
                 "decoder.nvidia=true network.open_async=true");
             
-            /*var myPreview = new MFPreviewClass();
+            /*var myPreview = new MFSink();
+            myPreview.SinkInit("asdf", "asdf", "");*/
 
-            myPreview.PreviewEnable("", 0, 0);*/
+            var myPreview = new MFPreviewClass();
+
+            myPreview.PreviewEnable("", 0, 0);
 
             Thread.Sleep(5000);
 
@@ -69,7 +77,7 @@ public class WriterReaderClass : ReactiveObject
                         var ct = DateTime.Now;
                         var currentTimecodeZeroed = $"{ct.Hour:00}:{ct.Minute:00}:{ct.Second:00}:00";
 
-                        encodingConfig += $" video::b='{10}M' video::g='5' start_timecode='{currentTimecodeZeroed}' ";
+                        encodingConfig += $" video::b='{10}M' video::g='5' start_timecode='{currentTimecodeZeroed}' object_name='Writer{ID}' ";
 
                         currentWriterDestination = @$"{folderName}\stream-{ID}.mov";
 
@@ -88,7 +96,7 @@ public class WriterReaderClass : ReactiveObject
 
                         myWriter.ReceiverFramePut(pFrame, -1, "");
                         
-                        //myPreview.ReceiverFramePut(pFrame, -1, "");
+                        myPreview.ReceiverFramePut(pFrame, -1, "");
                     }
                 }
                 catch (Exception ex)
@@ -109,6 +117,7 @@ public class WriterReaderClass : ReactiveObject
             doLoopReader = false;
 
             myReader.ReaderClose();
+            myPreview.MFClose();
         }
         catch (Exception ex)
         {
@@ -117,6 +126,7 @@ public class WriterReaderClass : ReactiveObject
     }
 
     private bool isReaderInitialized = false;
+    private bool IsPreviewPanelSet = false;
     private void ReaderThread()
     {
         try
@@ -124,7 +134,11 @@ public class WriterReaderClass : ReactiveObject
             var myReader = new MFReaderClass();
             var myPreview = new MFPreviewClass();
 
+            myPreview.PropsSet("preview.downscale", "2");
             myPreview.PreviewEnable("", 0, 0);
+
+
+            Thread.Sleep(3000);
 
             while (doLoopReader)
             {
@@ -137,10 +151,53 @@ public class WriterReaderClass : ReactiveObject
                         continue;
                     }
 
+                    if (MfMediaPlayerInst.Hwnd != IntPtr.Zero 
+                        && !IsPreviewPanelSet)
+                    {
+                        myPreview.PreviewWindowSet("", MfMediaPlayerInst.Hwnd.ToInt32());
+                        IsPreviewPanelSet = true;
+                    }
+
                     if (!isReaderInitialized)
                     {
                         myReader.ReaderOpen(currentWriterDestination,
-                            "decoder.nvidia=true decoder.quicksync=true network.open_async=true");
+                            "decoder.nvidia=true " +
+                            "decoder.quicksync=true " +
+                            "network.open_async=true" +
+                            "duration.recalc_on_open=true");
+
+                        /*string fileInfo = string.Empty;
+
+                        void GetFileInfo(string propertyNode)
+                        {
+                            int nCount = 0;
+                            try
+                            {
+                                // get a number of properties
+                                myReader.PropsGetCount(propertyNode, out nCount);
+                            }
+                            catch (Exception) { }
+                            for (int i = 0; i < nCount; i++)
+                            {
+                                string sName;
+                                string sValue;
+                                int bNode = 0;
+                                myReader.PropsGetByIndex(propertyNode, i, out sName, out sValue, out bNode);
+                                // bNode flag indicates whether there are internal properties
+                                // to collect a full node name we should separated it with "::", e.g. "info::video.0"
+                                string sRelName = propertyNode.Length > 0 ? propertyNode + "::" + sName : sName;
+                                if (bNode != 0)
+                                {
+                                    GetFileInfo(sRelName); // call the method recursively in case of sub-nodes
+                                }
+                                else
+                                {
+                                    fileInfo += sRelName + " = " + sValue + Environment.NewLine;
+                                }
+                            }
+                        }
+
+                        GetFileInfo("");*/
 
                         isReaderInitialized = true;
                     }
@@ -159,7 +216,10 @@ public class WriterReaderClass : ReactiveObject
                     Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         OutputString =
-                            $"{DateTime.Now} \n Dur: {duration} \n TDur: {timeDuration.TotalSeconds} \n diff:{timeDuration.TotalSeconds - duration}";
+                            $"{DateTime.Now} \n" +
+                            $" Dur: {duration.ToString("0.##")} \n" +
+                            $" TDur: {timeDuration.TotalSeconds.ToString("0.##")} \n " +
+                            $"diff:{(timeDuration.TotalSeconds - duration).ToString("0.##")} \n";
                     });
 
                     myPreview.ReceiverFramePut(pFrame, -1, "");

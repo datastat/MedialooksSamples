@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:WriterRateControlSample.ViewModels"
+        xmlns:local="using:WriterRateControlSample.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -18,19 +19,28 @@
         <Button Content="OpenFolder" Command="{Binding OpenFolderCommand}" />
         <TextBox Text="{Binding FolderName}" />
         
-        <ListBox Items="{Binding WriterReaderList}">
-            
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel>
-                        <TextBlock Text="{Binding Id}" />
-                        <TextBlock Text="{Binding OutputString}" />
-                        
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        
-    </StackPanel>
+        <ItemsControl Items="{Binding WriterReaderList}">
 
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<UniformGrid Columns="2" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+			
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:WriterReaderClass">
+					
+					<Grid RowDefinitions="200, 20">
+						
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Id}" />
+                            <TextBlock Text="{Binding OutputString}" />
+                        </StackPanel>
+
+						<local:MfVideoHandleView Grid.Row="1" Width="200" Height="100" MediaPlayer="{Binding MfMediaPlayerInst}"  />
+					</Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
 </Window>
